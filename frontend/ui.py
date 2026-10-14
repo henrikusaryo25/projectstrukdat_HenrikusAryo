@@ -41,7 +41,7 @@ class Aplikasi2EZ4U:
 
         # M1: ARRAY VS LINKED LIST
         tk.Label(self.frame_m1, text="--- ARRAY ---", bg="#2c3e50", fg="#f39c12", font=("Arial", 9, "bold")).pack(pady=(5, 2))
-        tk.Button(self.frame_m1, text="Lihat Pesanan (Indeks ke-i)", command=self.array_lihat).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="Lihat Pesanan (Indeks ke-100k)", command=self.array_lihat).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah Reguler (Tail)", command=self.array_tambah_reguler).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah Prioritas (Tengah)", command=self.array_tambah_prioritas).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah VIP (Head)", command=self.array_tambah_vip).pack(fill="x", pady=2)
@@ -50,7 +50,7 @@ class Aplikasi2EZ4U:
         tk.Frame(self.frame_m1, height=2, bg="#7f8c8d").pack(fill="x", pady=15)
         
         tk.Label(self.frame_m1, text="--- LINKED LIST ---", bg="#2c3e50", fg="#1abc9c", font=("Arial", 9, "bold")).pack(pady=(5, 2))
-        tk.Button(self.frame_m1, text="Lihat Pesanan (Indeks ke-i)", command=self.ll_lihat).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="Lihat Pesanan (Indeks ke-100k)", command=self.ll_lihat).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah Reguler (Tail)", command=self.ll_tambah_reguler).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah Prioritas (Tengah)", command=self.ll_tambah_prioritas).pack(fill="x", pady=2)
         tk.Button(self.frame_m1, text="Tambah VIP (Head)", command=self.ll_tambah_vip).pack(fill="x", pady=2)
