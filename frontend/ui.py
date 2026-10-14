@@ -1,166 +1,188 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import time
 import sys
 import os
 
-# Menyambungkan folder frontend ke folder backend agar dapat memanggil m1_pesanan
+# Menyambungkan folder frontend ke folder backend
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 from m1_pesanan import muat_pesanan_csv, Pesanan
+from m2_antrean import AntreanDapur
 
 class Aplikasi2EZ4U:
     def __init__(self, root):
         self.root = root
-        self.root.title("Food Delivery - Project Struktur Data")
-        self.root.geometry("1000x650")
+        self.root.title("2EZ4U Food Delivery - M1 & M2")
+        self.root.geometry("1100x650")
 
-        # Status pemuatan data
+        # Variabel Status
         self.array_pesanan = None
         self.ll_pesanan = None
+        self.dapur = AntreanDapur() # Objek M2
 
         self.buat_antarmuka()
         self.muat_data_awal()
 
     def buat_antarmuka(self):
-        # PANEL KIRI: Menu Tombol Operasi M1 
-        frame_kiri = tk.Frame(self.root, width=280, bg="#2c3e50", padx=10, pady=10)
-        frame_kiri.pack(side="left", fill="y")
+        # ---------------------------------------------------------
+        # BUKU TAB (Notebook) untuk memisah UI M1 dan M2
+        # ---------------------------------------------------------
+        self.tab_kontrol = ttk.Notebook(self.root)
+        self.tab_kontrol.pack(side="left", fill="y", padx=5, pady=5)
 
-        tk.Label(frame_kiri, text="PANEL OPERASI M1", bg="#2c3e50", fg="white", font=("Arial", 12, "bold")).pack(pady=(0, 15))
+        # Tab M1 (Kiri)
+        self.frame_m1 = tk.Frame(self.tab_kontrol, width=300, bg="#2c3e50", padx=10, pady=10)
+        self.tab_kontrol.add(self.frame_m1, text="M1: Performa Data")
 
-        # Sub-bagian Array
-        tk.Label(frame_kiri, text=" ARRAY ", bg="#2c3e50", fg="#f39c12", font=("Arial", 9, "bold")).pack(anchor="w", pady=(5, 2))
-        tk.Button(frame_kiri, text="1. Tambah Reguler (Belakang)", bg="#ecf0f1", command=self.array_tambah_reguler).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="2. Tambah VIP (Depan)", bg="#ecf0f1", command=self.array_tambah_vip).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="3. Tambah Prioritas (Tengah)", bg="#ecf0f1", command=self.array_tambah_prioritas).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="4. Hapus Pesanan (Indeks 0)", bg="#e74c3c", fg="white", command=self.array_hapus).pack(fill="x", pady=2)
+        # Tab M2 (Kiri)
+        self.frame_m2 = tk.Frame(self.tab_kontrol, width=300, bg="#27ae60", padx=10, pady=10)
+        self.tab_kontrol.add(self.frame_m2, text="M2: Antrean Dapur")
 
-        tk.Frame(frame_kiri, height=2, bg="#7f8c8d").pack(fill="x", pady=10)
+        # ---------------------------------------------------------
+        # ISI TAB M1: ARRAY VS LINKED LIST
+        # ---------------------------------------------------------
+        tk.Label(self.frame_m1, text="--- ARRAY ---", bg="#2c3e50", fg="#f39c12", font=("Arial", 9, "bold")).pack(pady=(5, 2))
+        tk.Button(self.frame_m1, text="1. Tambah Reguler (Tail)", command=self.array_tambah_reguler).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="2. Tambah VIP (Head)", command=self.array_tambah_vip).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="3. Hapus Pesanan (Head)", command=self.array_hapus).pack(fill="x", pady=2)
 
-        # Sub-bagian Linked List
-        tk.Label(frame_kiri, text=" LINKED LIST ", bg="#2c3e50", fg="#1abc9c", font=("Arial", 9, "bold")).pack(anchor="w", pady=(5, 2))
-        tk.Button(frame_kiri, text="1. Tambah Reguler (Tail)", bg="#ecf0f1", command=self.ll_tambah_reguler).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="2. Tambah VIP (Head)", bg="#ecf0f1", command=self.ll_tambah_vip).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="3. Tambah Prioritas (Tengah)", bg="#ecf0f1", command=self.ll_tambah_prioritas).pack(fill="x", pady=2)
-        tk.Button(frame_kiri, text="4. Hapus Pesanan (Head)", bg="#e74c3c", fg="white", command=self.ll_hapus).pack(fill="x", pady=2)
+        tk.Frame(self.frame_m1, height=2, bg="#7f8c8d").pack(fill="x", pady=10)
 
-        tk.Frame(frame_kiri, height=2, bg="#7f8c8d").pack(fill="x", pady=10)
+        tk.Label(self.frame_m1, text="--- LINKED LIST ---", bg="#2c3e50", fg="#1abc9c", font=("Arial", 9, "bold")).pack(pady=(5, 2))
+        tk.Button(self.frame_m1, text="1. Tambah Reguler (Tail)", command=self.ll_tambah_reguler).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="2. Tambah VIP (Head)", command=self.ll_tambah_vip).pack(fill="x", pady=2)
+        tk.Button(self.frame_m1, text="3. Hapus Pesanan (Head)", command=self.ll_hapus).pack(fill="x", pady=2)
 
-        # Tombol Tampilkan Data Teratas
-        tk.Button(frame_kiri, text="🔍 Lihat 5 Pesanan Teratas", bg="#3498db", fg="white", font=("Arial", 9, "bold"), command=self.tampilkan_data_teratas).pack(fill="x", pady=5)
+        # ---------------------------------------------------------
+        # ISI TAB M2: ANTREAN KOKI
+        # ---------------------------------------------------------
+        tk.Label(self.frame_m2, text="SISTEM ANTREAN KOKI", bg="#27ae60", fg="white", font=("Arial", 12, "bold")).pack(pady=(0, 15))
+        
+        tk.Button(self.frame_m2, text="📥 1. Impor Semua CSV ke Dapur", bg="#f1c40f", font=("Arial", 10, "bold"), command=self.impor_ke_dapur).pack(fill="x", pady=10)
+        
+        tk.Button(self.frame_m2, text="👨‍🍳 2. Masak 1 Pesanan (Dequeue)", bg="#e74c3c", fg="white", font=("Arial", 10, "bold"), command=self.masak_pesanan).pack(fill="x", pady=10)
+        
+        tk.Button(self.frame_m2, text="👀 3. Intip Antrean Terdepan", bg="#3498db", fg="white", command=self.intip_dapur).pack(fill="x", pady=2)
+        tk.Button(self.frame_m2, text="📊 4. Lihat Status Dapur", bg="#9b59b6", fg="white", command=self.status_dapur).pack(fill="x", pady=2)
 
+
+        # ---------------------------------------------------------
         # PANEL KANAN: Layar Output & Log Performa
+        # ---------------------------------------------------------
         frame_kanan = tk.Frame(self.root, bg="#ecf0f1", padx=10, pady=10)
         frame_kanan.pack(side="right", fill="both", expand=True)
 
         tk.Label(frame_kanan, text="Layar Informasi / Data", bg="#ecf0f1", font=("Arial", 10, "bold")).pack(anchor="w")
-        self.layar_hasil = tk.Text(frame_kanan, height=16, font=("Consolas", 10))
+        self.layar_hasil = tk.Text(frame_kanan, height=20, font=("Consolas", 10))
         self.layar_hasil.pack(fill="both", expand=True, pady=(2, 10))
 
         tk.Label(frame_kanan, text="Command Log & Catatan Performa (Waktu Eksekusi)", bg="#ecf0f1", font=("Arial", 10, "bold")).pack(anchor="w")
-        self.layar_log = tk.Text(frame_kanan, height=10, bg="#111111", fg="#00ff00", font=("Consolas", 10))
+        self.layar_log = tk.Text(frame_kanan, height=8, bg="#111111", fg="#00ff00", font=("Consolas", 10))
         self.layar_log.pack(fill="x", pady=(2, 0))
 
+    # =========================================================
+    # FUNGSI UTILITAS
+    # =========================================================
     def muat_data_awal(self):
-        self.layar_hasil.insert(tk.END, "Memuat dataset 200.000 baris dari data/pesanan.csv, mohon tunggu sebentar...\n")
+        self.layar_hasil.insert(tk.END, "Memuat dataset 200.000 baris...\n")
         self.root.update()
 
         jalur_csv = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'pesanan.csv'))
-        
         mulai = time.perf_counter()
         self.array_pesanan, self.ll_pesanan = muat_pesanan_csv(jalur_csv)
         selesai = time.perf_counter()
 
-        waktu_ms = (selesai - mulai) * 1000
-        self.layar_hasil.insert(tk.END, f"✅ Data berhasil dimuat!\n")
-        self.layar_hasil.insert(tk.END, f"• Total Array      : {self.array_pesanan.ukuran} data\n")
-        self.layar_hasil.insert(tk.END, f"• Total Linked List : {self.ll_pesanan.ukuran} data\n\n")
-        
-        self.catat_log("MUAT_DATASET_200K", "m1 - csv_loader", waktu_ms)
+        self.layar_hasil.insert(tk.END, f"✅ CSV Termuat: {self.ll_pesanan.ukuran} baris siap!\n\n")
+        self.catat_log("MUAT_DATA_AWAL", "m1", (selesai - mulai) * 1000)
 
     def catat_log(self, perintah, modul, waktu_ms):
-        teks = f"[{time.strftime('%H:%M:%S')}] {perintah:<30} -> {modul:<15} | Waktu: {waktu_ms:.4f} ms\n"
+        teks = f"[{time.strftime('%H:%M:%S')}] {perintah:<25} -> {modul:<10} | Waktu: {waktu_ms:.4f} ms\n"
         self.layar_log.insert(tk.END, teks)
         self.layar_log.see(tk.END)
 
-    def buat_pesanan_dummy(self, tipe):
-        oid = f"O-TEST-{int(time.time())}"
-        return Pesanan(oid, "Pelanggan Test", "Resto Test", "Menu Test", 25000, tipe, "12:00", "", "ANTRE")
+    def buat_dummy(self, prioritas):
+        return Pesanan(f"O-TEST", "Tamu", "Resto", "Menu", 25000, prioritas, "12:00", "", "ANTRE")
 
-    # OPERASI ARRAY
+    # =========================================================
+    # FUNGSI M1 (Tetap Dipertahankan)
+    # =========================================================
     def array_tambah_reguler(self):
-        p = self.buat_pesanan_dummy(3)
         mulai = time.perf_counter()
-        self.array_pesanan.append(p)
-        selesai = time.perf_counter()
-        self.catat_log("ARRAY_TAMBAH_REGULER", "m1 - array", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[Array] Added Reguler -> Total Data: {self.array_pesanan.ukuran}\n")
+        self.array_pesanan.append(self.buat_dummy(3))
+        self.catat_log("ARR_ADD_REGULER", "m1-array", (time.perf_counter() - mulai)*1000)
 
     def array_tambah_vip(self):
-        p = self.buat_pesanan_dummy(1)
         mulai = time.perf_counter()
-        self.array_pesanan.insert_front(p)
-        selesai = time.perf_counter()
-        self.catat_log("ARRAY_TAMBAH_VIP (FRONT)", "m1 - array", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[Array] Added VIP (Depan) -> Total Data: {self.array_pesanan.ukuran}\n")
-
-    def array_tambah_prioritas(self):
-        p = self.buat_pesanan_dummy(2)
-        posisi = self.array_pesanan.ukuran // 2
-        mulai = time.perf_counter()
-        self.array_pesanan.insert_middle(posisi, p)
-        selesai = time.perf_counter()
-        self.catat_log("ARRAY_TAMBAH_PRIORITAS (MID)", "m1 - array", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[Array] Added Prioritas (Tengah) -> Total Data: {self.array_pesanan.ukuran}\n")
+        self.array_pesanan.insert_front(self.buat_dummy(1))
+        self.catat_log("ARR_ADD_VIP", "m1-array", (time.perf_counter() - mulai)*1000)
 
     def array_hapus(self):
-        if self.array_pesanan.ukuran == 0:
-            return
         mulai = time.perf_counter()
         self.array_pesanan.delete(0)
-        selesai = time.perf_counter()
-        self.catat_log("ARRAY_HAPUS_INDEX_0", "m1 - array", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[Array] Deleted Index 0 -> Total Data: {self.array_pesanan.ukuran}\n")
+        self.catat_log("ARR_HAPUS_DEPAN", "m1-array", (time.perf_counter() - mulai)*1000)
 
-    # OPERASI LINKED LIST
     def ll_tambah_reguler(self):
-        p = self.buat_pesanan_dummy(3)
         mulai = time.perf_counter()
-        self.ll_pesanan.append(p)
-        selesai = time.perf_counter()
-        self.catat_log("LL_TAMBAH_REGULER", "m1 - linkedlist", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[LinkList] Added Reguler -> Total Data: {self.ll_pesanan.ukuran}\n")
+        self.ll_pesanan.append(self.buat_dummy(3))
+        self.catat_log("LL_ADD_REGULER", "m1-ll", (time.perf_counter() - mulai)*1000)
 
     def ll_tambah_vip(self):
-        p = self.buat_pesanan_dummy(1)
         mulai = time.perf_counter()
-        self.ll_pesanan.insert_front(p)
-        selesai = time.perf_counter()
-        self.catat_log("LL_TAMBAH_VIP (FRONT)", "m1 - linkedlist", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[LinkList] Added VIP (Depan) -> Total Data: {self.ll_pesanan.ukuran}\n")
-
-    def ll_tambah_prioritas(self):
-        p = self.buat_pesanan_dummy(2)
-        posisi = self.ll_pesanan.ukuran // 2
-        mulai = time.perf_counter()
-        self.ll_pesanan.insert_middle(posisi, p)
-        selesai = time.perf_counter()
-        self.catat_log("LL_TAMBAH_PRIORITAS (MID)", "m1 - linkedlist", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[LinkList] Added Prioritas (Tengah) -> Total Data: {self.ll_pesanan.ukuran}\n")
+        self.ll_pesanan.insert_front(self.buat_dummy(1))
+        self.catat_log("LL_ADD_VIP", "m1-ll", (time.perf_counter() - mulai)*1000)
 
     def ll_hapus(self):
-        if self.ll_pesanan.ukuran == 0:
-            return
         mulai = time.perf_counter()
         self.ll_pesanan.delete(0)
+        self.catat_log("LL_HAPUS_DEPAN", "m1-ll", (time.perf_counter() - mulai)*1000)
+
+
+    # =========================================================
+    # FUNGSI M2: ANTREAN DAPUR
+    # =========================================================
+    def impor_ke_dapur(self):
+        self.layar_hasil.insert(tk.END, "Mentransfer 200.000 data ke Antrean Dapur...\n")
+        self.root.update()
+
+        mulai = time.perf_counter()
+        # Transfer dari Linked List M1 ke Antrean Dapur M2
+        sekarang = self.ll_pesanan.head
+        while sekarang:
+            self.dapur.tambah_pesanan(sekarang.data)
+            sekarang = sekarang.next
         selesai = time.perf_counter()
-        self.catat_log("LL_HAPUS_HEAD", "m1 - linkedlist", (selesai - mulai) * 1000)
-        self.layar_hasil.insert(tk.END, f"[LinkList] Deleted Head -> Total Data: {self.ll_pesanan.ukuran}\n")
-    # VIEW DATA
-    def tampilkan_data_teratas(self):
-        self.layar_hasil.insert(tk.END, "\n=== 5 DATA TERATAS (ARRAY) ===\n")
-        for i in range(min(5, self.array_pesanan.ukuran)):
-            p = self.array_pesanan.get(i)
-            if p:
-                self.layar_hasil.insert(tk.END, f"[{i+1}] ID: {p.oid} | Nama: {p.pelanggan} | Resto: {p.resto} | Menu: {p.menu}\n")
-        self.layar_hasil.insert(tk.END, "\n")
+
+        self.layar_hasil.insert(tk.END, "✅ Berhasil! Semua pesanan masuk dapur.\n")
+        self.status_dapur()
+        self.catat_log("IMPOR_MASAL_DAPUR", "m2-queue", (selesai - mulai) * 1000)
+
+    def masak_pesanan(self):
+        mulai = time.perf_counter()
+        p = self.dapur.proses_pesanan()
+        selesai = time.perf_counter()
+
+        if p:
+            self.layar_hasil.insert(tk.END, f"🍳 Koki Memasak: {p.pelanggan} (Prioritas {p.prioritas}) | Status: {p.status}\n")
+        else:
+            self.layar_hasil.insert(tk.END, "⚠️ Dapur kosong! Tidak ada pesanan untuk dimasak.\n")
+        
+        self.layar_hasil.see(tk.END)
+        self.catat_log("DEQUEUE_MASAK", "m2-queue", (selesai - mulai) * 1000)
+
+    def intip_dapur(self):
+        p = self.dapur.intip_antrean_terdepan()
+        if p:
+            self.layar_hasil.insert(tk.END, f"👀 Selanjutnya dimasak: {p.pelanggan} (Prioritas {p.prioritas})\n")
+        else:
+            self.layar_hasil.insert(tk.END, "👀 Antrean kosong.\n")
+        self.layar_hasil.see(tk.END)
+
+    def status_dapur(self):
+        teks = f"\n=== STATUS DAPUR ===\n"
+        teks += f"Antrean VIP (1) : {self.dapur.q_vip.ukuran}\n"
+        teks += f"Antrean Prioritas (2): {self.dapur.q_prioritas.ukuran}\n"
+        teks += f"Antrean Reguler (3)  : {self.dapur.q_reguler.ukuran}\n"
+        teks += f"Total Belum Dimasak  : {self.dapur.total_antrean()}\n"
+        teks += f"Total Selesai Dimasak: {self.dapur.riwayat_selesai.ukuran}\n====================\n\n"
+        self.layar_hasil.insert(tk.END, teks)
+        self.layar_hasil.see(tk.END)

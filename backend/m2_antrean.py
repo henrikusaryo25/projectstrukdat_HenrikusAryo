@@ -17,10 +17,12 @@ class AntreanDapur:
 
     def tambah_pesanan(self, pesanan):
         """ENQUEUE: Memasukkan pesanan ke antrean berdasarkan prioritasnya"""
-        # Penambahan di akhir (tail) senarai, performa O(1) berkat Linked List
-        if pesanan.prioritas == 1:
+        # Konversi prioritas dari teks (string) menjadi angka (integer) agar setara
+        tingkat_prioritas = int(pesanan.prioritas)
+        
+        if tingkat_prioritas == 1:
             self.q_vip.append(pesanan)
-        elif pesanan.prioritas == 2:
+        elif tingkat_prioritas == 2:
             self.q_prioritas.append(pesanan)
         else:
             self.q_reguler.append(pesanan)
