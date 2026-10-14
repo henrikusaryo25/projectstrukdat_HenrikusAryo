@@ -1,4 +1,4 @@
-# 🍔 2EZ4U Food Delivery - Project Struktur Data
+# 🍔 Food Delivery - Project Struktur Data
 
 Proyek ini adalah simulasi sistem antrean dan manajemen data pesanan untuk layanan pesan antar makanan **2EZ4U**. Proyek ini difokuskan pada implementasi dan analisis komparasi performa berbagai struktur data murni (tanpa menggunakan tipe data instan seperti `dict` atau *built-in library* Python).
 
