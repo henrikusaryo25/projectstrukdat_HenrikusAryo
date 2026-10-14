@@ -1,85 +1,228 @@
 import sys
 import os
 
-# Menyambungkan akses ke struktur data di m1_pesanan.py
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-from m1_pesanan import LinkList, Pesanan
+from m1_pesanan import Array, LinkList, Pesanan
 
-class AntreanDapur:
+# ==========================================
+# BAGIAN A: STACK UNTUK KASIR (INFIX -> POSTFIX & UNDO/REDO)
+# ==========================================
+class Stack:
+    """Implementasi Stack sederhana di atas Array murni"""
     def __init__(self):
-        # Menggunakan 3 Linked List terpisah sebagai wadah antrean (Queue)
-        self.q_vip = LinkList()       # Prioritas 1
-        self.q_prioritas = LinkList() # Prioritas 2
-        self.q_reguler = LinkList()   # Prioritas 3
+        self.data = Array()
         
-        # Wadah untuk menyimpan pesanan yang sudah selesai dimasak
-        self.riwayat_selesai = LinkList()
+    def push(self, x):
+        self.data.append(x)
+        
+    def pop(self):
+        if self.data.ukuran == 0:
+            return None
+        teratas = self.data.get(self.data.ukuran - 1)
+        self.data.delete(self.data.ukuran - 1)
+        return teratas
+        
+    def peek(self):
+        if self.data.ukuran == 0:
+            return None
+        return self.data.get(self.data.ukuran - 1)
+        
+    def is_empty(self):
+        return self.data.ukuran == 0
 
-    def tambah_pesanan(self, pesanan):
-        """ENQUEUE: Memasukkan pesanan ke antrean berdasarkan prioritasnya"""
-        # Konversi prioritas dari teks (string) menjadi angka (integer) agar setara
-        tingkat_prioritas = int(pesanan.prioritas)
-        
-        if tingkat_prioritas == 1:
-            self.q_vip.append(pesanan)
-        elif tingkat_prioritas == 2:
-            self.q_prioritas.append(pesanan)
+def tingkat_operator(op):
+    if op in ('*', '/'): return 2
+    if op in ('+', '-'): return 1
+    return 0
+
+def tokenisasi(ekspresi):
+    """Memecah teks "(3*12000)+(2*8500)-5000" menjadi daftar token yang benar"""
+    token = []
+    angka_sementara = ""
+    for char in ekspresi:
+        if char.isdigit():
+            angka_sementara += char
         else:
-            self.q_reguler.append(pesanan)
+            if angka_sementara:
+                token.append(angka_sementara)
+                angka_sementara = ""
+            if char in "()+-*/":
+                token.append(char)
+    if angka_sementara:
+        token.append(angka_sementara)
+    return token
 
-    def proses_pesanan(self):
-        """DEQUEUE: Mengeluarkan pesanan dari depan antrean tertinggi untuk dimasak"""
-        pesanan_diproses = None
-
-        # Koki selalu melihat antrean dari prioritas paling tinggi
-        if self.q_vip.ukuran > 0:
-            pesanan_diproses = self.q_vip.get(0)
-            self.q_vip.delete(0)
-        elif self.q_prioritas.ukuran > 0:
-            pesanan_diproses = self.q_prioritas.get(0)
-            self.q_prioritas.delete(0)
-        elif self.q_reguler.ukuran > 0:
-            pesanan_diproses = self.q_reguler.get(0)
-            self.q_reguler.delete(0)
+def ke_postfix(ekspresi):
+    """Mengubah notasi Infix menjadi Postfix"""
+    stack_op = Stack()
+    postfix = []
+    tokens = tokenisasi(ekspresi)
+    
+    for t in tokens:
+        if t.isdigit():
+            postfix.append(t)
+        elif t == '(':
+            stack_op.push(t)
+        elif t == ')':
+            while not stack_op.is_empty() and stack_op.peek() != '(':
+                postfix.append(stack_op.pop())
+            stack_op.pop() # Buang '('
+        else:
+            while (not stack_op.is_empty() and stack_op.peek() != '(' and 
+                   tingkat_operator(stack_op.peek()) >= tingkat_operator(t)):
+                postfix.append(stack_op.pop())
+            stack_op.push(t)
+            
+    while not stack_op.is_empty():
+        postfix.append(stack_op.pop())
         
-        if pesanan_diproses:
-            pesanan_diproses.status = "SELESAI"
-            self.riwayat_selesai.append(pesanan_diproses)
-            return pesanan_diproses
-        
-        return None # Mengembalikan None jika semua antrean kosong
+    return " ".join(postfix)
 
-    def intip_antrean_terdepan(self):
-        """PEEK: Melihat siapa yang akan dimasak selanjutnya tanpa mengeluarkannya"""
-        if self.q_vip.ukuran > 0:
-            return self.q_vip.get(0)
-        elif self.q_prioritas.ukuran > 0:
-            return self.q_prioritas.get(0)
-        elif self.q_reguler.ukuran > 0:
-            return self.q_reguler.get(0)
-        return None
-
-    def total_antrean(self):
-        """Menghitung total keseluruhan pesanan yang belum dimasak"""
-        return self.q_vip.ukuran + self.q_prioritas.ukuran + self.q_reguler.ukuran
+def hitung_postfix(postfix_str):
+    """Mengevaluasi hasil Postfix menjadi total angka"""
+    stack_angka = Stack()
+    tokens = postfix_str.split()
+    
+    for t in tokens:
+        if t.isdigit():
+            stack_angka.push(int(t))
+        else:
+            b = stack_angka.pop() # Keluaran pertama adalah operand kanan
+            a = stack_angka.pop()
+            if t == '+': stack_angka.push(a + b)
+            elif t == '-': stack_angka.push(a - b)
+            elif t == '*': stack_angka.push(a * b)
+            elif t == '/': stack_angka.push(a // b)
+            
+    return stack_angka.pop()
 
 # ==========================================
-# BLOK PENGUJIAN LOKAL
+# BAGIAN B: QUEUE (NAIF VS CIRCULAR)
 # ==========================================
-if __name__ == "__main__":
-    dapur = AntreanDapur()
-    
-    print("--- SIMULASI PESANAN MASUK ---")
-    dapur.tambah_pesanan(Pesanan("O-01", "Budi (Reguler)", "Resto A", "Ayam", 15000, 3, "10:00", "", "ANTRE"))
-    dapur.tambah_pesanan(Pesanan("O-02", "Andi (Reguler)", "Resto B", "Soto", 12000, 3, "10:05", "", "ANTRE"))
-    dapur.tambah_pesanan(Pesanan("O-03", "Siska (VIP)", "Resto C", "Steak", 50000, 1, "10:10", "", "ANTRE"))
-    dapur.tambah_pesanan(Pesanan("O-04", "Rina (Prioritas)", "Resto A", "Ayam", 15000, 2, "10:15", "", "ANTRE"))
-    
-    print(f"Total antrean saat ini: {dapur.total_antrean()} pesanan")
-    print(f"Pesanan terdepan: {dapur.intip_antrean_terdepan().pelanggan}")
-    
-    print("\n--- SIMULASI KOKI MEMASAK ---")
-    for _ in range(4):
-        p = dapur.proses_pesanan()
-        if p:
-            print(f"Memasak: {p.pelanggan} - Status: {p.status}")
+class AntreanNaif:
+    """O(n) per dequeue karena menggeser sisa array"""
+    def __init__(self):
+        self.data = Array()
+        self.total_geser = 0
+        
+    def enqueue(self, x):
+        self.data.append(x)
+        
+    def dequeue(self):
+        if self.data.ukuran == 0:
+            return None
+        keluar = self.data.get(0)
+        
+        # Simulasi pop(0) yang lambat
+        self.data.delete(0)
+        self.total_geser += self.data.ukuran # Mencatat beban kerja
+        return keluar
+
+class AntreanMelingkar:
+    """O(1) per dequeue karena hanya memutar pointer"""
+    def __init__(self, kapasitas=350000):
+        # Kapasitas dibuat statis besar agar cukup untuk 200rb data
+        self.kapasitas = kapasitas
+        self.data = [None] * self.kapasitas
+        self.front = 0
+        self.rear = 0
+        self.count = 0 # Pencacah untuk mencegah kebingungan penuh/kosong
+        
+    def enqueue(self, x):
+        if self.count == self.kapasitas:
+            return False # Tolak jika penuh
+        self.data[self.rear] = x
+        self.rear = (self.rear + 1) % self.kapasitas
+        self.count += 1
+        return True
+        
+    def dequeue(self):
+        if self.count == 0:
+            return None
+        keluar = self.data[self.front]
+        self.data[self.front] = None # Bersihkan memori (opsional)
+        self.front = (self.front + 1) % self.kapasitas
+        self.count -= 1
+        return keluar
+
+# ==========================================
+# MANAJER ANTREAN (MENGHUBUNGKAN QUEUE DENGAN UNDO/REDO)
+# ==========================================
+class ManajerAntrean:
+    def __init__(self):
+        self.q_naif = AntreanNaif()
+        self.q_circular = AntreanMelingkar()
+        
+        # Stack untuk riwayat
+        self.stack_undo = Stack()
+        self.stack_redo = Stack()
+        
+    def aksi_enqueue(self, pesanan):
+        self.q_naif.enqueue(pesanan)
+        self.q_circular.enqueue(pesanan)
+        
+        # Catat untuk undo
+        self.stack_undo.push({"aksi": "ENQUEUE", "data": pesanan})
+        # Kosongkan redo setiap ada aksi baru
+        while not self.stack_redo.is_empty():
+            self.stack_redo.pop()
+            
+    def aksi_dequeue(self, jumlah=1):
+        keluaran_naif = []
+        keluaran_circular = []
+        
+        for _ in range(jumlah):
+            if self.q_naif.data.ukuran > 0:
+                keluaran_naif.append(self.q_naif.dequeue())
+                keluaran_circular.append(self.q_circular.dequeue())
+                
+        if keluaran_circular:
+            # Catat keseluruhan daftar yang dihapus ke dalam stack
+            self.stack_undo.push({"aksi": "DEQUEUE", "data": keluaran_circular})
+            while not self.stack_redo.is_empty():
+                self.stack_redo.pop()
+                
+        return keluaran_circular
+        
+    def undo_last(self):
+        aksi_terakhir = self.stack_undo.pop()
+        if not aksi_terakhir: return False
+        
+        # Jika sebelumnya enqueue, batalkan dengan mengeluarkannya dari antrean
+        if aksi_terakhir["aksi"] == "ENQUEUE":
+            # (Untuk simulasi naif, menghapus elemen paling belakang)
+            self.q_naif.data.ukuran -= 1 
+            self.q_circular.count -= 1
+            self.q_circular.rear = (self.q_circular.rear - 1) % self.q_circular.kapasitas
+            
+        # Jika sebelumnya dequeue, kembalikan data ke DEPAN antrean circular
+        elif aksi_terakhir["aksi"] == "DEQUEUE":
+            daftar_pesanan = aksi_terakhir["data"]
+            # Kembalikan dengan arah terbalik agar urutannya tetap benar di depan
+            for p in reversed(daftar_pesanan):
+                self.q_circular.front = (self.q_circular.front - 1) % self.q_circular.kapasitas
+                self.q_circular.data[self.q_circular.front] = p
+                self.q_circular.count += 1
+                
+                # Kembalikan juga ke Antrean Naif (di indeks 0)
+                self.q_naif.data.insert_front(p)
+                
+        self.stack_redo.push(aksi_terakhir)
+        return True
+        
+    def redo_last(self):
+        aksi_batal = self.stack_redo.pop()
+        if not aksi_batal: return False
+        
+        # Kerjakan ulang aksi aslinya
+        if aksi_batal["aksi"] == "ENQUEUE":
+            self.q_naif.enqueue(aksi_batal["data"])
+            self.q_circular.enqueue(aksi_batal["data"])
+        elif aksi_batal["aksi"] == "DEQUEUE":
+            jumlah = len(aksi_batal["data"])
+            for _ in range(jumlah):
+                self.q_naif.dequeue()
+                self.q_circular.dequeue()
+                
+        self.stack_undo.push(aksi_batal)
+        return True
