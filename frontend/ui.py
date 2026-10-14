@@ -165,7 +165,7 @@ class Aplikasi2EZ4U:
 
     def array_tambah_prioritas(self):
         mulai = time.perf_counter()
-        self.array_pesanan.insert(100000, self.buat_dummy(2))
+        self.array_pesanan.insert_middle(100000, self.buat_dummy(2))
         waktu = (time.perf_counter() - mulai) * 1000
         self.catat_log("M1-Array", "Tambah Prioritas", waktu)
         self.layar_hasil.insert(tk.END, f"⚡ ARRAY Tambah Prioritas di Tengah/Indeks 100k ({waktu:.4f} ms)\n")
@@ -205,7 +205,7 @@ class Aplikasi2EZ4U:
 
     def ll_tambah_prioritas(self):
         mulai = time.perf_counter()
-        self.ll_pesanan.insert(100000, self.buat_dummy(2))
+        self.ll_pesanan.insert_middle(100000, self.buat_dummy(2))
         waktu = (time.perf_counter() - mulai) * 1000
         self.catat_log("M1-LL", "Tambah Prioritas", waktu)
         self.layar_hasil.insert(tk.END, f"⚡ LINKED LIST Tambah Prioritas di Tengah/Indeks 100k ({waktu:.4f} ms)\n")
